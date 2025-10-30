@@ -1,2 +1,3 @@
 # GamersHUB
-a new generation gaming experience al over world 
+A futuristic gaming social hub made by Shubh Dixit
+
