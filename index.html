@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>GamersHUB — Google Login</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --neon: #00ffff;
+    --accent: #ff00cc;
+    --glass-border: rgba(0,255,255,0.12);
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;font-family:'Orbitron',sans-serif;background:#000; color:#fff}
+  body{ overflow:hidden; text-align:center }
+
+  /* Animated background */
+  body::before{
+    content:"";position:fixed;inset:0;z-index:-1;
+    background: linear-gradient(45deg,#000000,#0a0f1f,#001f3f,#002f5f,#003f7f,#000000);
+    background-size:400% 400%; animation: gradientMove 10s infinite alternate;
+  }
+  @keyframes gradientMove{0%{background-position:0% 50%}100%{background-position:100% 50%}}
+
+  header{display:flex;justify-content:space-between;align-items:center;padding:10px 18px;border-bottom:1px solid rgba(255,255,255,0.02)}
+  .brand{display:flex;align-items:center;gap:12px}
+  .brand img{width:44px;height:44px}
+  .brand h1{margin:0;color:var(--neon);text-shadow:0 0 12px var(--neon);font-size:1.4rem}
+  .small{font-size:0.85rem;color:#cfe9ff}
+
+  /* Landing */
+  #landing{padding:48px 12px}
+  #landing h2{font-size:3rem;margin:20px 0;color:var(--neon);text-shadow:0 0 10px var(--neon)}
+  .creator-line{font-size:1.1rem;font-weight:700;color:#fff;border-top:2px solid var(--neon);border-bottom:2px solid var(--neon);display:inline-block;padding:8px 18px;margin-top:12px;text-shadow:0 0 8px var(--neon)}
+  .instagram{margin-top:18px}
+  .instagram img{width:34px;vertical-align:middle;margin-right:10px;filter:drop-shadow(0 0 8px var(--accent))}
+
+  .enter-btn{display:inline-block;background:transparent;border:2px solid var(--neon);color:var(--neon);padding:12px 28px;border-radius:10px;margin-top:26px;font-weight:700;cursor:pointer;box-shadow:0 0 12px rgba(0,255,255,0.05)}
+  .enter-btn:hover{background:var(--neon);color:#001020;box-shadow:0 0 30px var(--neon)}
+
+  /* Pages */
+  .page{ position:fixed; inset:60px 20px 20px 20px; display:none; overflow:auto; border-radius:12px; }
+  .page.active{ display:block }
+  .card{
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    border-radius:12px; padding:14px; border:1px solid var(--glass-border);
+    backdrop-filter: blur(8px);
+    box-shadow: 0 12px 30px rgba(0,0,0,0.6);
+    color:#fff;
+  }
+
+  /* Login panel */
+  .login-panel{ max-width:420px;margin:30px auto }
+  .btn { display:inline-block;padding:10px 18px;border-radius:10px;border:2px solid var(--neon); background:transparent;color:var(--neon);cursor:pointer;font-weight:700 }
+  .btn:hover{ background:var(--neon); color:#001020 }
+
+  /* Hub layout */
+  #workspace{ position:relative; width:100%; height:100%; overflow:hidden }
+  .float-win{
+    width:320px; min-height:180px; position:absolute; border-radius:12px; padding:12px; cursor:move;
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    border:1px solid rgba(255,255,255,0.06); box-shadow: 0 12px 30px rgba(0,0,0,0.6);
+    transition: transform 0.12s;
+  }
+  .float-win .title{ font-weight:800; color:var(--neon); text-shadow:0 0 6px var(--neon) }
+  .float-win:hover{ transform: translateY(-6px) }
+
+  /* Chat */
+  #chatWin{ width:720px; left:40px; top:320px }
+  #messages{ height:340px; overflow:auto; border-radius:8px; padding:12px; border:1px solid var(--glass-border); background:rgba(0,0,0,0.25) }
+  .msg{ margin-bottom:8px;padding:8px;border-radius:8px;background:rgba(255,255,255,0.02) }
+  .meta{ font-size:0.75rem;color:#dff }
+
+  /* games list */
+  .game-list{ margin-top:12px; display:flex; flex-direction:column; gap:8px }
+  .game-item{ display:flex;justify-content:space-between;align-items:center;padding:8px;border-radius:8px;background:rgba(0,0,0,0.25) }
+
+  /* top-right user */
+  #userPanel { position: absolute; right: 30px; top: 20px; display:flex; gap:12px; align-items:center; z-index:20 }
+  #avatar{ width:44px; height:44px; border-radius:50%; border:2px solid var(--neon) }
+
+  /* responsive */
+  @media (max-width:900px){
+    #chatWin{ width:92%; left:4% }
+    .float-win{ width:92%; left:4%; top:90px }
+    #messages{ height:240px }
+    #landing h2{ font-size:2.2rem }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/59/Game_icon.svg/48px-Game_icon.svg.png" alt="logo">
+    <div>
+      <h1>GamersHUB</h1>
+      <div class="small">Show your stats • Link game IDs • Chat worldwide</div>
+    </div>
+  </div>
+
+  <div id="userPanel" style="display:none">
+    <img id="avatar" src="" alt="avatar">
+    <div id="userName" style="text-align:left"></div>
+    <button id="logoutBtn" class="btn">LOGOUT</button>
+  </div>
+</header>
+
+<!-- Landing -->
+<section id="landing">
+  <h2>GamersHUB</h2>
+  <div class="creator-line">Created by <strong>SHUBH DIXIT</strong></div>
+  <div class="instagram">
+    <a href="https://www.instagram.com/Amo_shubh" target="_blank" class="card" style="display:inline-block;margin-top:18px;padding:10px 18px;">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/a/a5/Instagram_icon.png" alt="insta">@Amo_shubh
+    </a>
+  </div>
+  <div>
+    <button id="enterBtn" class="enter-btn">ENTER</button>
+  </div>
+</section>
+
+<!-- Login Page (shows after Enter) -->
+<section id="loginPage" class="page card">
+  <div class="login-panel">
+    <h2 style="color:var(--neon)">Sign in with Google</h2>
+    <p class="small">Use your Google account to sign in instantly.</p>
+    <button id="googleBtn" class="btn">Sign in with Google</button>
+    <div style="margin-top:14px">
+      <button id="continueGuest" class="btn" style="border-style:dashed">Continue as Guest</button>
+    </div>
+  </div>
+</section>
+
+<!-- Hub Page -->
+<section id="hubPage" class="page">
+  <div id="workspace">
+    <!-- floating profile -->
+    <div id="profileWin" class="float-win card" style="left:40px; top:60px">
+      <div class="title">Profile</div>
+      <div id="profileArea" style="margin-top:8px">
+        <div id="profileInfo">Not signed in</div>
+        <label style="display:block;margin-top:8px">Display name</label>
+        <input id="displayName" placeholder="Your gamer tag" style="width:100%;padding:8px;border-radius:8px;background:transparent;border:1px solid var(--glass-border);color:#fff" />
+        <button id="saveProfile" class="btn" style="margin-top:8px">Save</button>
+      </div>
+    </div>
+
+    <!-- games -->
+    <div id="gamesWin" class="float-win card" style="left:380px; top:80px">
+      <div class="title">Linked Game IDs</div>
+      <label style="display:block;margin-top:10px">Game</label>
+      <input id="gameName" placeholder="Game name" style="width:100%;padding:8px;border-radius:8px;background:transparent;border:1px solid var(--glass-border);color:#fff" />
+      <label style="display:block;margin-top:8px">Game ID</label>
+      <input id="gameId" placeholder="ID#1234" style="width:100%;padding:8px;border-radius:8px;background:transparent;border:1px solid var(--glass-border);color:#fff" />
+      <button id="addGame" class="btn" style="margin-top:8px">Add</button>
+
+      <div class="game-list" id="gameList"></div>
+    </div>
+
+    <!-- chat -->
+    <div id="chatWin" class="float-win card" style="left:40px; top:320px; width:720px">
+      <div class="title">Global Chat</div>
+      <div id="messages"></div>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <input id="messageInput" placeholder="Say hi to gamers..." style="flex:1;padding:10px;border-radius:8px;background:transparent;border:1px solid var(--glass-border);color:#fff" />
+        <button id="sendMsg" class="btn">Send</button>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- Firebase + App Logic -->
+<script type="module">
+/*
+  IMPORTANT:
+  - Create Firebase Web App, enable Google sign-in & Firestore.
+  - Paste your firebaseConfig below where indicated.
+*/
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+import {
+  getAuth, GoogleAuthProvider, signInWithPopup, signOut,
+  onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+
+import {
+  getFirestore, doc, setDoc, getDoc, collection, addDoc,
+  onSnapshot, query, orderBy, serverTimestamp, deleteDoc
+} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+/* ====== PASTE YOUR FIREBASE CONFIG OBJECT HERE ======
+   Replace the placeholder object below with the config from
+   Firebase Console (Project settings → SDK setup).
+*/
+const firebaseConfig = {
+  apiKey: "AIzaSyD8SEkepPJfVDe8cs5EnaHbdKJg_fjgxIc",
+  authDomain: "gamershub-147b6.firebaseapp.com",
+  projectId: "gamershub-147b6",
+  storageBucket: "gamershub-147b6.firebasestorage.app",
+  messagingSenderId: "523861773757",
+  appId: "1:523861773757:web:bf038c5e167b8dcfd5d6d4"
+};
+/* ================================================== */
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const provider = new GoogleAuthProvider();
+const db = getFirestore(app);
+
+/* --- UI refs --- */
+const enterBtn = document.getElementById('enterBtn');
+const landing = document.getElementById('landing');
+const loginPage = document.getElementById('loginPage');
+const hubPage = document.getElementById('hubPage');
+
+const googleBtn = document.getElementById('googleBtn');
+const continueGuest = document.getElementById('continueGuest');
+
+const userPanel = document.getElementById('userPanel');
+const userNameEl = document.getElementById('userName');
+const avatarEl = document.getElementById('avatar');
+const logoutBtn = document.getElementById('logoutBtn');
+
+const profileInfo = document.getElementById('profileInfo');
+const displayNameInput = document.getElementById('displayName');
+const saveProfileBtn = document.getElementById('saveProfile');
+
+const gameNameInput = document.getElementById('gameName');
+const gameIdInput = document.getElementById('gameId');
+const addGameBtn = document.getElementById('addGame');
+const gameListDiv = document.getElementById('gameList');
+
+const messagesDiv = document.getElementById('messages');
+const messageInput = document.getElementById('messageInput');
+const sendMsgBtn = document.getElementById('sendMsg');
+
+/* --- navigation --- */
+enterBtn.addEventListener('click', ()=>{
+  landing.style.display = 'none';
+  loginPage.classList.add('active');
+});
+
+/* --- Google sign-in --- */
+googleBtn.addEventListener('click', async ()=>{
+  try{
+    await signInWithPopup(auth, provider);
+    // onAuthStateChanged will display hub
+  }catch(e){ alert('Google sign-in error: ' + e.message) }
+});
+
+/* Guest continue */
+continueGuest.addEventListener('click', ()=>{
+  loginPage.classList.remove('active');
+  showHub(null, true);
+});
+
+/* Logout */
+logoutBtn.addEventListener('click', async ()=>{
+  await signOut(auth);
+});
+
+/* --- Auth listener --- */
+onAuthStateChanged(auth, async (user) => {
+  if(user){
+    // show hub
+    loginPage.classList.remove('active');
+    showHub(user, false);
+  } else {
+    // show landing only
+    landing.style.display = 'block';
+    loginPage.classList.remove('active');
+    hubPage.classList.remove('active');
+    userPanel.style.display = 'none';
+  }
+});
+
+/* --- show hub: attach listeners --- */
+let gamesUnsub = null;
+let chatUnsub = null;
+
+async function showHub(user, isGuest){
+  hubPage.classList.add('active');
+
+  // show user in top-right
+  if(user){
+    userPanel.style.display = 'flex';
+    userNameEl.textContent = user.displayName || user.email || 'Player';
+    avatarEl.src = user.photoURL || 'https://via.placeholder.com/44';
+    profileInfo.textContent = `Signed in as ${user.displayName || user.email || user.uid}`;
+    displayNameInput.value = user.displayName || '';
+  } else {
+    // guest UI
+    userPanel.style.display = 'flex';
+    userNameEl.textContent = 'Guest';
+    avatarEl.src = 'https://via.placeholder.com/44';
+    profileInfo.textContent = 'Guest (not saved)';
+    displayNameInput.value = '';
+  }
+
+  // attach realtime games listener for user (if logged in)
+  if(gamesUnsub) gamesUnsub();
+  if(user){
+    const gamesCol = collection(db, 'users', user.uid, 'games');
+    gamesUnsub = onSnapshot(gamesCol, snap=>{
+      gameListDiv.innerHTML = '';
+      snap.forEach(docSnap => {
+        const d = docSnap.data();
+        const el = document.createElement('div');
+        el.className = 'game-item';
+        el.innerHTML = `<div>
+                          <strong>${escapeHtml(d.game)}</strong>
+                          <div style="font-size:0.85rem;color:#dff">${escapeHtml(d.id)}</div>
+                        </div>
+                        <div style="display:flex;gap:8px">
+                          <button class="btn btn-show" data-id="${docSnap.id}">Show</button>
+                          <button class="btn btn-del" data-id="${docSnap.id}" style="border-color:#ff6666">Remove</button>
+                        </div>`;
+        gameListDiv.appendChild(el);
+      });
+      // attach handlers
+      gameListDiv.querySelectorAll('.btn-show').forEach(b=> b.addEventListener('click', ()=> openStatsWindow(b.dataset.id)));
+      gameListDiv.querySelectorAll('.btn-del').forEach(b=> b.addEventListener('click', async ()=>{
+        const docId = b.dataset.id;
+        await deleteDoc(doc(db, 'users', user.uid, 'games', docId));
+      }));
+    });
+  } else {
+    // no saved games for guest
+    gameListDiv.innerHTML = '<div style="opacity:0.8">Sign in to save and show game IDs.</div>';
+  }
+
+  // chat realtime
+  if(chatUnsub) chatUnsub();
+  const q = query(collection(db, 'messages'), orderBy('ts','asc'));
+  chatUnsub = onSnapshot(q, snap=>{
+    messagesDiv.innerHTML = '';
+    snap.forEach(s=>{
+      const d = s.data();
+      const el = document.createElement('div');
+      el.className = 'msg';
+      el.innerHTML = `<div class="meta">${escapeHtml(d.name || 'Anon')} • ${d.ts ? new Date(d.ts.toMillis()).toLocaleString() : ''}</div>
+                      <div>${escapeHtml(d.text || '')}</div>`;
+      messagesDiv.appendChild(el);
+    });
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+  });
+}
+
+/* --- Save profile --- */
+saveProfileBtn.addEventListener('click', async ()=>{
+  const user = auth.currentUser;
+  if(!user){
+    alert('Sign in to save profile');
+    return;
+  }
+  const display = displayNameInput.value.trim() || user.displayName || '';
+  await setDoc(doc(db, 'users', user.uid), {
+    uid: user.uid,
+    name: display,
+    email: user.email || null,
+    updatedAt: serverTimestamp()
+  }, { merge:true });
+  alert('Profile saved');
+});
+
+/* --- Add game --- */
+addGameBtn.addEventListener('click', async ()=>{
+  const user = auth.currentUser;
+  if(!user){
+    alert('Sign in to add games');
+    return;
+  }
+  const g = gameNameInput.value.trim();
+  const id = gameIdInput.value.trim();
+  if(!g || !id){ alert('Enter game and ID'); return; }
+  await addDoc(collection(db, 'users', user.uid, 'games'), { game: g, id, addedAt: serverTimestamp() });
+  gameNameInput.value = ''; gameIdInput.value = '';
+});
+
+/* --- Chat send --- */
+sendMsgBtn.addEventListener('click', async ()=>{
+  const text = messageInput.value.trim();
+  if(!text) return;
+  const user = auth.currentUser;
+  await addDoc(collection(db, 'messages'), {
+    text,
+    uid: user ? user.uid : 'guest',
+    name: user ? (user.displayName || user.email) : 'Guest',
+    ts: serverTimestamp()
+  });
+  messageInput.value = '';
+});
+
+/* --- floating stats windows --- */
+function openStatsWindow(docId){
+  // simple demo stats window — in future you can fetch detailed stats
+  const win = document.createElement('div');
+  win.className = 'float-win card';
+  win.style.left = (Math.random()*500 + 20) + 'px';
+  win.style.top = (Math.random()*200 + 40) + 'px';
+  win.innerHTML = `<div class="title">Player Stats</div>
+    <div style="margin-top:8px">
+      <div><strong>Doc ID:</strong> ${escapeHtml(docId)}</div>
+      <div style="margin-top:8px">Kills: ${randomInt(10,300)} | Wins: ${randomInt(0,80)}</div>
+      <div style="margin-top:8px">KD: ${(Math.random()*3).toFixed(2)}</div>
+      <div style="margin-top:8px"><button class="btn close-win">Close</button></div>
+    </div>`;
+  document.getElementById('workspace').appendChild(win);
+  win.querySelector('.close-win').addEventListener('click', ()=> win.remove());
+  makeDraggable(win);
+}
+
+/* --- draggable helper --- */
+function makeDraggable(el){
+  let isDown=false, ox=0, oy=0, startX=0, startY=0;
+  el.addEventListener('mousedown', (e)=>{
+    isDown = true;
+    ox = el.offsetLeft; oy = el.offsetTop;
+    startX = e.clientX; startY = e.clientY;
+    el.style.zIndex = ++_zIndex;
+  });
+  window.addEventListener('mousemove', (e)=>{
+    if(!isDown) return;
+    const dx = e.clientX - startX, dy = e.clientY - startY;
+    el.style.left = (ox + dx) + 'px';
+    el.style.top = (oy + dy) + 'px';
+  });
+  window.addEventListener('mouseup', ()=> isDown = false);
+}
+let _zIndex = 20;
+/* init draggable for existing floating windows */
+document.querySelectorAll('.float-win').forEach(makeDraggable);
+
+/* --- small helpers --- */
+function escapeHtml(str){ if(!str) return ''; return String(str).replace(/[&<>"']/g, s=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[s])) }
+function randomInt(a,b){ return Math.floor(Math.random()*(b-a+1))+a }
+</script>
+</body>
+</html>
